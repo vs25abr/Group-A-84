@@ -139,3 +139,147 @@ cat("Smog_Rating: Smog rating (1=worst, 10=best)\n")
 # Save Cleaned Dataset
 write.csv(data_clean, "Fuel_Consumption_Clean.csv", row.names = FALSE)
 cat("\nCleaned dataset saved as 'Fuel_Consumption_Clean.csv'\n")
+# Quick Preview
+cat("\n First 10 rows of cleaned data \n")
+print(head(data_clean, 10))
+
+# Load cleaned data
+data_clean <- read.csv("Fuel_Consumption_Clean.csv")
+
+cat(" Data Visualisations\n\n")
+
+# Scatter Plot for Research Question
+
+cat("Main scatter plot (Engine Size vs CO2 Emissions)\n")
+
+plot_main <- ggplot(data_clean, aes(x = Engine_Size_L, y = CO2_Emissions_gkm)) +
+  geom_point(aes(color = Vehicle_Class), alpha = 0.6, size = 2.5) +
+  geom_smooth(method = "lm", se = TRUE, color = "red", linewidth = 1.2, 
+              fill = "lightblue", alpha = 0.3) +
+  labs(
+    title = "Relationship between Engine Size and CO2 Emissions in 2019 Vehicles",
+    x = "Engine Size (Litres)",
+    y = "CO2 Emissions (grams per kilometre)",
+    color = "Vehicle Class",
+    caption = paste0("Source: 2019 Fuel Consumption Ratings, n = ", nrow(data_clean))
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13, hjust = 0.5),
+    axis.title.x = element_text(face = "bold", size = 11),
+    axis.title.y = element_text(face = "bold", size = 11),
+    legend.position = "right",
+    legend.title = element_text(face = "bold"),
+    plot.caption = element_text(hjust = 0, size = 9, color = "gray40")
+  ) +
+  scale_x_continuous(breaks = seq(0, 8, 1)) +
+  scale_y_continuous(breaks = seq(0, 550, 50))
+
+# Save the main plot
+ggsave("Engine_CO2_Scatter.png", plot_main, 
+       width = 10, height = 6, dpi = 300, bg = "white")
+cat("Saved:Engine_CO2_Scatter.png\n\n")
+print(plot_main)   
+
+#  Histogram for CO2 Emissions Distribution 
+cat("CO2 Emissions distribution histogram\n")
+
+plot_co2_hist <- ggplot(data_clean, aes(x = CO2_Emissions_gkm)) +
+  geom_histogram(binwidth = 20, fill = "steelblue", color = "black", 
+                 alpha = 0.7) +
+  geom_vline(aes(xintercept = mean(CO2_Emissions_gkm)), 
+             color = "red", linetype = "dashed", linewidth = 1) +
+  annotate("text", x = mean(data_clean$CO2_Emissions_gkm) + 30, 
+           y = Inf, vjust = 2,
+           label = paste0("Mean = ", round(mean(data_clean$CO2_Emissions_gkm), 1), " g/km"),
+           color = "red", fontface = "bold") +
+  labs(
+    title = "Distribution of CO2 Emissions in 2019 Vehicles",
+    x = "CO2 Emissions (grams per kilometre)",
+    y = "Frequency (Number of Vehicles)",
+    caption = paste0("n = ", nrow(data_clean), 
+                     ", Mean = ", round(mean(data_clean$CO2_Emissions_gkm), 1),
+                     " g/km, SD = ", round(sd(data_clean$CO2_Emissions_gkm), 1))
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13, hjust = 0.5),
+    axis.title.x = element_text(face = "bold", size = 11),
+    axis.title.y = element_text(face = "bold", size = 11),
+    plot.caption = element_text(hjust = 0.5, size = 9, color = "gray40")
+  )
+
+ggsave("CO2_Distribution.png", plot_co2_hist, 
+       width = 8, height = 6, dpi = 300, bg = "white")
+cat("Saved: CO2_Distribution.png\n\n")
+print(plot_co2_hist)   
+
+# Histogram for Engine Size Distribution
+cat("Engine Size distribution histogram\n")
+
+plot_engine_hist <- ggplot(data_clean, aes(x = Engine_Size_L)) +
+  geom_histogram(binwidth = 0.5, fill = "darkgreen", color = "black", 
+                 alpha = 0.7) +
+  geom_vline(aes(xintercept = mean(Engine_Size_L)), 
+             color = "red", linetype = "dashed", linewidth = 1) +
+  annotate("text", x = mean(data_clean$Engine_Size_L) + 0.5, 
+           y = Inf, vjust = 2,
+           label = paste0("Mean = ", round(mean(data_clean$Engine_Size_L), 2), " L"),
+           color = "red", fontface = "bold") +
+  labs(
+    title = "Distribution of Engine Size in 2019 Vehicles",
+    x = "Engine Size (Litres)",
+    y = "Frequency (Number of Vehicles)",
+    caption = paste0("n = ", nrow(data_clean), 
+                     ", Mean = ", round(mean(data_clean$Engine_Size_L), 2),
+                     " L, SD = ", round(sd(data_clean$Engine_Size_L), 2))
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13, hjust = 0.5),
+    axis.title.x = element_text(face = "bold", size = 11),
+    axis.title.y = element_text(face = "bold", size = 11),
+    plot.caption = element_text(hjust = 0.5, size = 9, color = "gray40")
+  ) +
+  scale_x_continuous(breaks = seq(0, 8, 1))
+
+ggsave("Engine_Distribution.png", plot_engine_hist, 
+       width = 8, height = 6, dpi = 300, bg = "white")
+cat(" Saved:Engine_Distribution.png\n\n")
+print(plot_engine_hist)   
+
+# Correlation Comparison Table 
+cat("Correlation matrix for key variables\n")
+
+# Select relevant variables
+cor_vars <- data_clean %>% 
+  select(Engine_Size_L, Cylinders, 
+         Fuel_Consumption_Comb_L100km, CO2_Emissions_gkm)
+
+# Calculate correlation matrix
+cor_matrix <- cor(cor_vars)
+
+# Print correlation matrix
+cat("\nCorrelation Matrix :\n")
+print(round(cor_matrix, 3))
+
+# Save as CSV 
+write.csv(round(cor_matrix, 3), "Correlation_Matrix.csv")
+cat("\nSaved: Correlation_Matrix.csv\n\n")
+# Descriptive Statistics Table
+cat("Descriptive statistics\n")
+
+# Create summary table
+desc_stats <- data_clean %>%
+  summarise(
+    Variable = "Multiple",
+    Engine_Size_Mean = round(mean(Engine_Size_L), 2),
+    Engine_Size_SD = round(sd(Engine_Size_L), 2),
+    CO2_Mean = round(mean(CO2_Emissions_gkm), 1),
+    CO2_SD = round(sd(CO2_Emissions_gkm), 1),
+    N = n()
+  )
+
+print(desc_stats)
+write.csv(desc_stats, "Descriptive_Statistics.csv", row.names = FALSE)
+cat("Saved: Descriptive_Statistics.csv\n\n")
