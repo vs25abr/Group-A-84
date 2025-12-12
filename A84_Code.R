@@ -283,3 +283,150 @@ desc_stats <- data_clean %>%
 print(desc_stats)
 write.csv(desc_stats, "Descriptive_Statistics.csv", row.names = FALSE)
 cat("Saved: Descriptive_Statistics.csv\n\n")
+
+
+# Regression Analysis
+
+# Load cleaned data
+data_clean <- read.csv("Fuel_Consumption_Clean.csv")
+
+cat("Regression Analysis\n")
+cat("Research Question: Can engine size predict CO2 emissions?\n\n")
+
+# Linear Regression
+cat(" Simple Linear Regression \n")
+cat("Predictor: Engine_Size_L\n")
+cat("Outcome: CO2_Emissions_gkm\n\n")
+
+# Build regression model
+model <- lm(CO2_Emissions_gkm ~ Engine_Size_L, data = data_clean)
+
+# Display results
+cat("Model Summary:\n")
+summary(model)
+
+# Extract key statistics
+r_squared <- summary(model)$r.squared
+adj_r_squared <- summary(model)$adj.r.squared
+f_stat <- summary(model)$fstatistic[1]
+p_value <- pf(summary(model)$fstatistic[1], 
+              summary(model)$fstatistic[2], 
+              summary(model)$fstatistic[3], 
+              lower.tail = FALSE)
+
+cat("\n Key Statistics \n")
+cat("R-squared:", round(r_squared, 4), "\n")
+cat("Adjusted R-squared:", round(adj_r_squared, 4), "\n")
+cat("F-statistic:", round(f_stat, 2), "\n")
+cat("p-value:", format(p_value, scientific = TRUE), "\n")
+
+# Interpretation
+cat("\n Interpretaion\n")
+if(p_value < 0.05) {
+  cat("Reject Null Hypothesis (p < 0.05)\n")
+  cat("Engine size SIGNIFICANTLY predicts CO2 emissions.\n")
+  cat("R² =", round(r_squared, 4), "meaning engine size explains", 
+      round(r_squared * 100, 1), "% of variance in CO2 emissions.\n")
+} else {
+  cat("Fail to Reject Null Hypothesis (p >= 0.05)\n")
+  cat("Engine size does NOT significantly predict CO2 emissions.\n")
+}
+
+# Model Co-efficient
+cat("\n Regression Equation \n")
+intercept <- coef(model)[1]
+slope <- coef(model)[2]
+cat("CO2 Emissions = ", round(intercept, 2), " + ", 
+    round(slope, 2), " × Engine Size\n", sep = "")
+cat("\nInterpretation: For every 1L increase in engine size,\n")
+cat("CO2 emissions increase by", round(slope, 2), "g/km on average.\n")
+
+# Scatter Plot with Regression
+cat("\n Creating Visualization \n")
+
+# Main scatter plot with regression line
+plot1 <- ggplot(data_clean, aes(x = Engine_Size_L, y = CO2_Emissions_gkm)) +
+  geom_point(aes(color = Vehicle_Class), alpha = 0.6, size = 2.5) +
+  geom_smooth(method = "lm", se = TRUE, color = "red", linewidth = 1.2) +
+  labs(
+    title = "Relationship between Engine Size and CO2 Emissions",
+    subtitle = paste0("R² = ", round(r_squared, 3), 
+                      ", p < 0.001, n = ", nrow(data_clean)),
+    x = "Engine Size (Litres)",
+    y = "CO2 Emissions (g/km)",
+    color = "Vehicle Class"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 10),
+    legend.position = "right"
+  )
+
+# Save the plot
+ggsave("Regression_Engine_CO2.png", plot1, 
+       width = 10, height = 6, dpi = 300)
+cat("Saved: Regression_Engine_CO2.png\n")
+print(plot1)   
+
+#  Histogram - CO2 Emissions Distirbution 
+plot2 <- ggplot(data_clean, aes(x = CO2_Emissions_gkm)) +
+  geom_histogram(binwidth = 20, fill = "steelblue", color = "black", alpha = 0.7) +
+  geom_vline(aes(xintercept = mean(CO2_Emissions_gkm)), 
+             color = "red", linetype = "dashed", linewidth = 1) +
+  labs(
+    title = "Distribution of CO2 Emissions in 2019 Vehicles",
+    subtitle = paste0("Mean = ", round(mean(data_clean$CO2_Emissions_gkm), 1), 
+                      " g/km, SD = ", round(sd(data_clean$CO2_Emissions_gkm), 1)),
+    x = "CO2 Emissions (g/km)",
+    y = "Frequency (Number of Vehicles)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+
+ggsave("CO2_Distribution.png", plot2, 
+       width = 8, height = 6, dpi = 300)
+cat("Saved: CO2_Distribution.png\n")
+print(plot2)   
+
+# Histogram Engine Size Distribution
+plot3 <- ggplot(data_clean, aes(x = Engine_Size_L)) +
+  geom_histogram(binwidth = 0.5, fill = "darkgreen", color = "black", alpha = 0.7) +
+  geom_vline(aes(xintercept = mean(Engine_Size_L)), 
+             color = "red", linetype = "dashed", linewidth = 1) +
+  labs(
+    title = "Distribution of Engine Size in 2019 Vehicles",
+    subtitle = paste0("Mean = ", round(mean(data_clean$Engine_Size_L), 2), 
+                      " L, SD = ", round(sd(data_clean$Engine_Size_L), 2)),
+    x = "Engine Size (Litres)",
+    y = "Frequency (Number of Vehicles)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+
+ggsave("Engine_Distribution.png", plot3, 
+       width = 8, height = 6, dpi = 300)
+cat("Saved: Engine_Distribution.png\n")
+print(plot3)   
+
+# Residual Plot 
+plot4 <- ggplot(data_clean, aes(x = fitted(model), y = residuals(model))) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(
+    title = "Residual Plot - Model Diagnostics",
+    x = "Fitted Values",
+    y = "Residuals"
+  ) +
+  theme_minimal()
+
+ggsave("Residuals.png", plot4, width = 8, height = 6, dpi = 300)
+cat("Saved:Residuals.png\n")
+print(plot4)   
+
+# Correlation Table
+cat("\nCorrelation Matrix \n")
+cor_vars <- data_clean %>% 
+  select(Engine_Size_L, Cylinders, Fuel_Consumption_Comb_L100km, CO2_Emissions_gkm)
+cor_matrix <- cor(cor_vars)
+print(round(cor_matrix, 3))
